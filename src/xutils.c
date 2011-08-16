@@ -27,6 +27,10 @@
 static GHashTable *atom_hash = NULL;
 static GHashTable *reverse_atom_hash = NULL;
 
+/**
+ * Connect to every screen on this display and watch for new windows.
+ */
+
 Atom
 my_wnck_atom_get (const char *atom_name)
 {
@@ -43,7 +47,7 @@ my_wnck_atom_get (const char *atom_name)
   retval = GPOINTER_TO_UINT (g_hash_table_lookup (atom_hash, atom_name));
   if (!retval)
     {
-      retval = XInternAtom (devil_display, atom_name, FALSE);
+      retval = XInternAtom (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), atom_name, FALSE);
 
       if (retval != None)
         {
@@ -79,7 +83,7 @@ my_wnck_change_state (Screen  *screen,
   xev.xclient.type = ClientMessage;
   xev.xclient.serial = 0;
   xev.xclient.send_event = True;
-  xev.xclient.display = devil_display;
+  xev.xclient.display = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
   xev.xclient.window = xwindow;
   xev.xclient.message_type = my_wnck_atom_get ("_NET_WM_STATE");
   xev.xclient.format = 32;
@@ -87,7 +91,7 @@ my_wnck_change_state (Screen  *screen,
   xev.xclient.data.l[1] = state1;
   xev.xclient.data.l[2] = state2;
 
-  XSendEvent (devil_display,
+  XSendEvent (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
 	      RootWindowOfScreen (screen),
               False,
 	      SubstructureRedirectMask | SubstructureNotifyMask,
@@ -103,7 +107,7 @@ my_wnck_error_trap_push (void)
 int
 my_wnck_error_trap_pop (void)
 {
-  XSync (devil_display, False);
+  XSync (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), False);
   return gdk_error_trap_pop ();
 }
 
@@ -125,7 +129,7 @@ my_wnck_get_string_property_latin1 (Window  xwindow,
   
   my_wnck_error_trap_push ();
   property = NULL;
-  result = XGetWindowProperty (devil_display,
+  result = XGetWindowProperty (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
 			       xwindow, atom,
 			       0, G_MAXLONG,
 			       False, AnyPropertyType, &type, &format, &nitems,
@@ -147,7 +151,7 @@ my_wnck_get_string_property_latin1 (Window  xwindow,
       pp = (long *)property;  // we can assume (long *) since format == 32
       if (nitems == 1)
         {
-          prop_name = XGetAtomName (devil_display, *pp);
+          prop_name = XGetAtomName (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), *pp);
           if (prop_name)
             {
               retval = g_strdup (prop_name);
@@ -160,7 +164,7 @@ my_wnck_get_string_property_latin1 (Window  xwindow,
           prop_names[nitems] = NULL;
           for (i=0; i < nitems; i++)
             {
-              prop_names[i] = XGetAtomName (devil_display, *pp++);
+              prop_names[i] = XGetAtomName (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), *pp++);
             }
           retval = g_strjoinv (", ", prop_names);
           for (i=0; i < nitems; i++)
@@ -197,7 +201,7 @@ my_wnck_window_get_xscreen (WnckWindow *window)
    XWindowAttributes attrs;
 
    xid = wnck_window_get_xid (window);
-   XGetWindowAttributes(devil_display, xid, &attrs);
+   XGetWindowAttributes(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), xid, &attrs);
 
    return attrs.screen;
 }
@@ -220,7 +224,7 @@ my_wnck_get_cardinal_list (Window   xwindow,
   
   my_wnck_error_trap_push ();
   type = None;
-  result = XGetWindowProperty (devil_display,
+  result = XGetWindowProperty (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
                               xwindow,
                               atom,
                               0, G_MAXLONG,
@@ -260,7 +264,7 @@ my_wnck_get_cardinal (Window   xwindow,
   
   my_wnck_error_trap_push ();
   type = None;
-  result = XGetWindowProperty (devil_display,
+  result = XGetWindowProperty (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
                               xwindow,
                               atom,
                               0, G_MAXLONG,
