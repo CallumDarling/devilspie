@@ -16,7 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <libwnck/window.h>
+#include <gdk/gdkx.h>
+#include <libwnck/libwnck.h>
 
 /* Global state */
 
@@ -44,3 +45,8 @@ extern Context context;
  * The main loop.
  */
 extern GMainLoop *loop;
+
+/**
+ * The main X Display
+ */
+extern Display *devil_display;

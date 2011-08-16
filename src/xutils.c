@@ -17,9 +17,12 @@
  */
 
 #include <config.h>
-#include "xutils.h"
 #include <string.h>
 #include <stdio.h>
+#include <gdk/gdkx.h>
+
+#include "devilspie.h"
+#include "xutils.h"
 
 static GHashTable *atom_hash = NULL;
 static GHashTable *reverse_atom_hash = NULL;
@@ -40,7 +43,7 @@ my_wnck_atom_get (const char *atom_name)
   retval = GPOINTER_TO_UINT (g_hash_table_lookup (atom_hash, atom_name));
   if (!retval)
     {
-      retval = XInternAtom (gdk_display, atom_name, FALSE);
+      retval = XInternAtom (devil_display, atom_name, FALSE);
 
       if (retval != None)
         {
@@ -76,7 +79,7 @@ my_wnck_change_state (Screen  *screen,
   xev.xclient.type = ClientMessage;
   xev.xclient.serial = 0;
   xev.xclient.send_event = True;
-  xev.xclient.display = gdk_display;
+  xev.xclient.display = devil_display;
   xev.xclient.window = xwindow;
   xev.xclient.message_type = my_wnck_atom_get ("_NET_WM_STATE");
   xev.xclient.format = 32;
@@ -84,7 +87,7 @@ my_wnck_change_state (Screen  *screen,
   xev.xclient.data.l[1] = state1;
   xev.xclient.data.l[2] = state2;
 
-  XSendEvent (gdk_display,
+  XSendEvent (devil_display,
 	      RootWindowOfScreen (screen),
               False,
 	      SubstructureRedirectMask | SubstructureNotifyMask,
@@ -100,7 +103,7 @@ my_wnck_error_trap_push (void)
 int
 my_wnck_error_trap_pop (void)
 {
-  XSync (gdk_display, False);
+  XSync (devil_display, False);
   return gdk_error_trap_pop ();
 }
 
@@ -122,7 +125,7 @@ my_wnck_get_string_property_latin1 (Window  xwindow,
   
   my_wnck_error_trap_push ();
   property = NULL;
-  result = XGetWindowProperty (gdk_display,
+  result = XGetWindowProperty (devil_display,
 			       xwindow, atom,
 			       0, G_MAXLONG,
 			       False, AnyPropertyType, &type, &format, &nitems,
@@ -144,7 +147,7 @@ my_wnck_get_string_property_latin1 (Window  xwindow,
       pp = (long *)property;  // we can assume (long *) since format == 32
       if (nitems == 1)
         {
-          prop_name = XGetAtomName (gdk_display, *pp);
+          prop_name = XGetAtomName (devil_display, *pp);
           if (prop_name)
             {
               retval = g_strdup (prop_name);
@@ -157,7 +160,7 @@ my_wnck_get_string_property_latin1 (Window  xwindow,
           prop_names[nitems] = NULL;
           for (i=0; i < nitems; i++)
             {
-              prop_names[i] = XGetAtomName (gdk_display, *pp++);
+              prop_names[i] = XGetAtomName (devil_display, *pp++);
             }
           retval = g_strjoinv (", ", prop_names);
           for (i=0; i < nitems; i++)
@@ -194,7 +197,7 @@ my_wnck_window_get_xscreen (WnckWindow *window)
    XWindowAttributes attrs;
 
    xid = wnck_window_get_xid (window);
-   XGetWindowAttributes(gdk_display, xid, &attrs);
+   XGetWindowAttributes(devil_display, xid, &attrs);
 
    return attrs.screen;
 }
@@ -217,7 +220,7 @@ my_wnck_get_cardinal_list (Window   xwindow,
   
   my_wnck_error_trap_push ();
   type = None;
-  result = XGetWindowProperty (gdk_display,
+  result = XGetWindowProperty (devil_display,
                               xwindow,
                               atom,
                               0, G_MAXLONG,
@@ -257,7 +260,7 @@ my_wnck_get_cardinal (Window   xwindow,
   
   my_wnck_error_trap_push ();
   type = None;
-  result = XGetWindowProperty (gdk_display,
+  result = XGetWindowProperty (devil_display,
                               xwindow,
                               atom,
                               0, G_MAXLONG,
@@ -320,9 +323,6 @@ void my_wnck_window_set_window_type (WnckWindow *window, WnckWindowType wintype)
   case WNCK_WINDOW_DIALOG:
     atom = my_wnck_atom_get ("_NET_WM_WINDOW_TYPE_DIALOG");
     break;
-  case WNCK_WINDOW_MODAL_DIALOG:
-    atom = my_wnck_atom_get ("_NET_WM_WINDOW_TYPE_MODAL_DIALOG");
-    break;
   case WNCK_WINDOW_TOOLBAR:
     atom = my_wnck_atom_get ("_NET_WM_WINDOW_TYPE_TOOLBAR");
     break;
@@ -340,7 +340,7 @@ void my_wnck_window_set_window_type (WnckWindow *window, WnckWindowType wintype)
   }
   my_wnck_error_trap_push ();
 
-  XChangeProperty (GDK_DISPLAY(), wnck_window_get_xid(window),
+  XChangeProperty (devil_display, wnck_window_get_xid(window),
                    my_wnck_atom_get ("_NET_WM_WINDOW_TYPE"),
                    XA_ATOM, 32, PropModeReplace, (guchar *)&atom, 1);
 

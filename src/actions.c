@@ -17,12 +17,10 @@
  */
 
 #include <config.h>
-#include <libwnck/application.h>
-#include <libwnck/class-group.h>
-#include <libwnck/workspace.h>
-#include <libwnck/window.h>
 #include <glib.h>
 #include <glib/gi18n.h>
+#include <libwnck/libwnck.h>
+
 #include "e-sexp.h"
 #include "xutils.h"
 #include "devilspie.h"
@@ -205,7 +203,7 @@ ESExpResult *func_geometry(ESExp *f, int argc, ESExpResult **argv, Context *c) {
 
   /* try to set new position.. */
   my_wnck_error_trap_push ();
-  XMoveResizeWindow (gdk_display,
+  XMoveResizeWindow (devil_display,
                      wnck_window_get_xid (c->window),
                      new_xoffset, new_yoffset,
                      new_width, new_height);
@@ -253,7 +251,7 @@ ESExpResult *func_center(ESExp *f, int argc, ESExpResult **argv, Context *c) {
 
   /* Try to set new position.. */
   my_wnck_error_trap_push ();
-  XMoveWindow (gdk_display,
+  XMoveWindow (devil_display,
                wnck_window_get_xid (c->window),
                xoffset, yoffset);
 
@@ -291,11 +289,7 @@ ESExpResult *func_unfullscreen(ESExp *f, int argc, ESExpResult **argv, Context *
  * Focus the current window.
  */
 ESExpResult *func_focus(ESExp *f, int argc, ESExpResult **argv, Context *c) {
-#if NEED_TIMESTAMPS
   wnck_window_activate (c->window, GDK_CURRENT_TIME);
-#else
-  wnck_window_activate (c->window);
-#endif
   if (debug) g_printerr (_("Focusing\n"));
   return e_sexp_result_new_bool (f, TRUE);
 }
@@ -349,11 +343,7 @@ ESExpResult *func_minimize(ESExp *f, int argc, ESExpResult **argv, Context *c) {
  * Un-minimise (i.e. restore) the current window.
  */
 ESExpResult *func_unminimize(ESExp *f, int argc, ESExpResult **argv, Context *c) {
-#if NEED_TIMESTAMPS
   wnck_window_unminimize (c->window, GDK_CURRENT_TIME);
-#else
-  wnck_window_unminimize (c->window);
-#endif
   if (debug) g_printerr(_("Un-minimising\n"));
   return e_sexp_result_new_bool (f, TRUE);
 }
@@ -380,11 +370,7 @@ ESExpResult *func_unshade(ESExp *f, int argc, ESExpResult **argv, Context *c) {
  * Close the current window.
  */
 ESExpResult *func_close(ESExp *f, int argc, ESExpResult **argv, Context *c) {
-#if NEED_TIMESTAMPS
   wnck_window_close (c->window, GDK_CURRENT_TIME);
-#else
-  wnck_window_close (c->window);
-#endif
   if (debug) g_printerr(_("Closed\n"));
   return e_sexp_result_new_bool (f, TRUE);
 }
@@ -514,7 +500,7 @@ ESExpResult *func_set_viewport(ESExp *f, int argc, ESExpResult **argv, Context *
   x = ((num - 1) * wnck_screen_get_width (screen)) - viewport_start + x;
 
   my_wnck_error_trap_push ();
-  XMoveResizeWindow (gdk_display,
+  XMoveResizeWindow (devil_display,
                      wnck_window_get_xid (c->window),
                      x, y, width, height);
   if (my_wnck_error_trap_pop ()) {
@@ -587,7 +573,7 @@ set_decorations (Context *c, gboolean decorate)
   hints.decorations = decorate ? 1 : 0;
 
   /* Set Motif hints, most window managers handle these */
-  XChangeProperty(GDK_DISPLAY(), wnck_window_get_xid (c->window),
+  XChangeProperty(devil_display, wnck_window_get_xid (c->window),
                   my_wnck_atom_get ("_MOTIF_WM_HINTS"), 
                   my_wnck_atom_get ("_MOTIF_WM_HINTS"), 32, PropModeReplace, 
                   (unsigned char *)&hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
@@ -697,7 +683,7 @@ ESExpResult *func_opacity(ESExp *f, int argc, ESExpResult **argv, Context *c) {
 	}
 	my_wnck_error_trap_push ();
 	v=0xffffffff/100*opacity;
-	XChangeProperty (GDK_DISPLAY(), wnck_window_get_xid(c->window),
+	XChangeProperty (devil_display, wnck_window_get_xid(c->window),
 		my_wnck_atom_get ("_NET_WM_WINDOW_OPACITY"),
 		XA_CARDINAL, 32, PropModeReplace, (guchar *)&v, 1);
 

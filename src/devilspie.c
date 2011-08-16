@@ -23,14 +23,16 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <glib/gi18n.h>
+#include <gdk/gdkx.h>
 #include <libwnck/libwnck.h>
-#include "e-sexp.h"
-#include "devilspie.h"
-#include "parser.h"
 
 #ifdef ENABLE_UNIQUE
 #include <unique/unique.h>
 #endif /* ENABLE_UNIQUE */
+
+#include "devilspie.h"
+#include "e-sexp.h"
+#include "parser.h"
 
 /* Global state */
 
@@ -66,6 +68,7 @@ static char **files = NULL;
  */
 GMainLoop *loop = NULL;
 
+Display *devil_display;
 /**
  * Evaluate a s-expression.
  */
@@ -86,9 +89,11 @@ static void window_opened_cb(WnckScreen *screen, WnckWindow *window) {
 /**
  * Connect to every screen on this display and watch for new windows.
  */
-static void init_screens(void) {
+static Display *init_screens(void) {
   int i;
-  const int num_screens = gdk_display_get_n_screens (gdk_display_get_default());
+  GdkDisplay *display = gdk_display_get_default();
+
+  const int num_screens = gdk_display_get_n_screens (display);
   for (i = 0 ; i < num_screens; ++i) {
     WnckScreen *screen = wnck_screen_get (i);
     /* Connect a callback to the window opened event in libwnck */
@@ -96,6 +101,7 @@ static void init_screens(void) {
     /* TODO: broken at the moment due to wnck change */
     //if (apply_to_existing) wnck_screen_force_update (screen);
   }
+  return GDK_DISPLAY_XDISPLAY(display);
 }
 
 /*
@@ -160,7 +166,7 @@ int main(int argc, char **argv) {
   }
 
   /* Connect to every screen */
-  init_screens ();
+  devil_display = init_screens ();
 
   /* Go go go! */
   loop = g_main_loop_new (NULL, TRUE);
