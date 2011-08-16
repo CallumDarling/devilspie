@@ -34,12 +34,22 @@ AC_SUBST(WNCK_LIBS)
 AC_MSG_CHECKING([whether Unique support is requested])
 AC_ARG_ENABLE([unique],
 	[AS_HELP_STRING([--enable-unique],
-	[Enable Unique (single-instance application) support (default: disabled)])],
-	[], [enable_unique=no])
+	[Enable Unique (single-instance application) support (default: autodetect)])],
+	[], [enable_unique=auto])
 AC_MSG_RESULT([$enable_unique])
 
-if test x"$enable_unique" = "xyes" ; then
-	PKG_CHECK_MODULES([UNIQUE], [unique-1.0 >= 1.1.2])
+if test x"$enable_unique" != "xno" ; then
+	PKG_CHECK_MODULES([UNIQUE], [unique-3.0], [have_unique=yes], [have_unique=no])
+    if test x"$enable_unique" = "xyes" -a x"$have_unique" = "xno"; then
+        AC_MSG_ERROR([Unique support was requested but libunique was not found])
+    elif test x"$have_unique" = x"yes"; then
+        enable_unique=yes
+    else
+        enable_unique=no
+    fi
+fi
+
+if test x"$enable_unique" = "xyes"; then
 	AC_DEFINE([ENABLE_UNIQUE], [1], [Define whether Unique support is enabled])
 fi
 
