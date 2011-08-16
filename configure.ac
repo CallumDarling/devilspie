@@ -27,7 +27,7 @@ AM_GLIB_GNU_GETTEXT
 PKG_CHECK_MODULES(WNCK,
         glib-2.0 >= 2.9.1
         gdk-3.0
-        libwnck-3.0 >= 0.17)
+        libwnck-3.0)
 AC_SUBST(WNCK_CFLAGS)
 AC_SUBST(WNCK_LIBS)
 
@@ -42,22 +42,6 @@ if test x"$enable_unique" = "xyes" ; then
 	PKG_CHECK_MODULES([UNIQUE], [unique-1.0 >= 1.1.2])
 	AC_DEFINE([ENABLE_UNIQUE], [1], [Define whether Unique support is enabled])
 fi
-
-# See if we have new libwnck with timestamp arguments
-PKG_CHECK_MODULES(WNCK_VER, libwnck-1.0 >= 2.9.92,
-		 wnck_new="yes", wnck_new="no")
-if test "x$wnck_new" = "xyes"; then
-        AC_DEFINE(NEED_TIMESTAMPS,1,[Define to 1 if timestamps are needed to wnck functions])
-fi
-
-# Check if we have the set_fullscreen function
-AC_CHECK_LIB(wnck-1, wnck_window_set_fullscreen,
-            have_fullscreen=1, have_fullscreen=0)
-AC_DEFINE_UNQUOTED(HAVE_FULLSCREEN, $have_fullscreen, [set_fullscreen is available])
-
-AC_CHECK_LIB(wnck-1, wnck_window_set_window_type,
-            have_set_wintype=1, have_set_wintype=0)
-AC_DEFINE_UNQUOTED(HAVE_SET_WINDOW_TYPE, $have_set_wintype, [set_window_type is available])
 
 # Check for the POSIX regexpr functions and headers
 AC_CHECK_FUNCS([regcomp regexec regfree])
